@@ -1,0 +1,57 @@
+name: Apply Patch (issue comment) -> PR
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: read
+
+jobs:
+  apply:
+    if: contains(github.event.comment.body, '/apply-patch')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract patch from comment
+        run: |
+          python3 .github/scripts/extract_patch.py "${{ github.event.comment.body }}" > /tmp/patch.diff
+
+      - name: Configure git
+        run: |
+          git config user.name "patch-bot"
+          git config user.email "patch-bot@users.noreply.github.com"
+
+      - name: Create branch
+        run: |
+          BR="bot/patch-${{ github.event.issue.number }}-${{ github.run_id }}"
+          echo "BRANCH=$BR" >> $GITHUB_ENV
+          git checkout -b "$BR"
+
+      - name: Apply patch
+        run: |
+          git apply /tmp/patch.diff
+
+      - name: Commit
+        run: |
+          git add -A
+          git commit -m "Apply patch from issue #${{ github.event.issue.number }}"
+
+      - name: Push branch
+        run: |
+          git push origin "$BRANCH"
+
+      - name: Create PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --title "Patch: issue #${{ github.event.issue.number }}" \
+            --body "Auto-generated from /apply-patch comment on issue #${{ github.event.issue.number }}." \
+            --head "$BRANCH" \
+            --base "main"
