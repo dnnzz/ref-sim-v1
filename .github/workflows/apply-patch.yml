@@ -18,9 +18,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract patch from comment
+      - name: Extract patch from event JSON
         run: |
-          python3 .github/scripts/extract_patch.py "${{ github.event.comment.body }}" > /tmp/patch.diff
+          python3 .github/scripts/extract_patch.py > /tmp/patch.diff
 
       - name: Configure git
         run: |
