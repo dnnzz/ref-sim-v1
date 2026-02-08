@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DenoClaw Referee V1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div class="brand">
+        <div class="mark"></div>
+        <div class="title">Referee Training · V1</div>
+      </div>
+      <div class="scoreboard">
+        <div class="team red">RED <span id="scoreRed">0</span></div>
+        <div class="sep">:</div>
+        <div class="team blue">BLUE <span id="scoreBlue">0</span></div>
+      </div>
+    </header>
+
+    <main class="stage">
+      <div id="game"></div>
+      <div class="sim-screen" id="simScreen" hidden>
+        <div class="sim-header">
+          <div class="sim-title">MATCH SIM</div>
+          <div class="sim-clock" id="simClock">0'</div>
+        </div>
+        <div class="sim-tests" id="simTests">
+          <div class="sim-tests-title">TESTS</div>
+          <div class="sim-test" id="testSimVisible">SIM visible: —</div>
+          <div class="sim-test" id="testEventStream">Event stream: —</div>
+          <div class="sim-test" id="testPositionFlow">Positions: —</div>
+          <div class="sim-test" id="testFullTime">Full time: —</div>
+        </div>
+        <div class="sim-actions">
+          <button class="btn" id="btnContinueMatch" hidden>CONTINUE MATCH</button>
+          <button class="btn" id="btnNewMatch" hidden>NEW MATCH</button>
+        </div>
+        <div class="sim-log" id="simLog"></div>
+      </div>
+      <div class="debug-panel" id="debugPanel">
+        <div class="debug-title">
+          <span>DEBUG</span>
+          <button class="btn tiny" id="dbgToggle">HIDE</button>
+        </div>
+        <div class="debug-row">
+          <label class="debug-label">Shot Outcome</label>
+          <div class="debug-actions">
+            <button class="btn tiny" id="dbgShotRandom">RANDOM</button>
+            <button class="btn tiny" id="dbgShotGoal">FORCE GOAL</button>
+            <button class="btn tiny" id="dbgShotSave">FORCE SAVE</button>
+          </div>
+        </div>
+        <div class="debug-row">
+          <label class="debug-label">Keeper Skill</label>
+          <input class="debug-range" id="dbgKeeperSkill" type="range" min="0" max="1" step="0.01" value="0.62" />
+          <div class="debug-value" id="dbgKeeperSkillVal">0.62</div>
+        </div>
+        <div class="debug-row">
+          <label class="debug-label">Shot Speed</label>
+          <input class="debug-range" id="dbgShotSpeed" type="range" min="120" max="260" step="5" value="185" />
+          <div class="debug-value" id="dbgShotSpeedVal">185</div>
+        </div>
+        <div class="debug-row">
+          <label class="debug-label">Feint Chance</label>
+          <input class="debug-range" id="dbgFeint" type="range" min="0" max="0.3" step="0.01" value="0.08" />
+          <div class="debug-value" id="dbgFeintVal">0.08</div>
+        </div>
+        <div class="debug-row">
+          <label class="debug-label">Misread Chance</label>
+          <input class="debug-range" id="dbgMisread" type="range" min="0" max="0.4" step="0.01" value="0.18" />
+          <div class="debug-value" id="dbgMisreadVal">0.18</div>
+        </div>
+        <div class="debug-row">
+          <label class="debug-label">Keeper Fatigue</label>
+          <div class="debug-actions">
+            <div class="debug-value" id="dbgFatigueTop">Top: 0.00</div>
+            <div class="debug-value" id="dbgFatigueBottom">Bottom: 0.00</div>
+          </div>
+        </div>
+        <div class="debug-row">
+          <label class="debug-label">Controls</label>
+          <div class="debug-actions">
+            <button class="btn tiny" id="dbgTriggerShot">TRIGGER SHOT</button>
+          </div>
+        </div>
+      </div>
+      <div class="hud" aria-live="polite">
+        <div class="hud-row">
+          <div class="pill" id="pillSituation">WAITING</div>
+          <div class="pill subtle" id="pillHint">—</div>
+          <div class="pill subtle" id="pillTime">00:00</div>
+          <div class="pill mission" id="pillMission" hidden>MISSION: —</div>
+        </div>
+
+        <div class="hud-row" id="hudMain">
+          <div class="prompt" id="prompt">A position will start in a moment.</div>
+          <div class="actions" id="actions">
+            <button class="btn" id="btnFoul" disabled>FOUL</button>
+            <button class="btn ghost" id="btnNoFoul" disabled>PLAY ON</button>
+            <div class="spacer"></div>
+            <button class="btn tiny" id="btnReset">NEW SCENE</button>
+          </div>
+          <div class="decision-timer" id="decisionTimer" hidden>
+            <div class="timer-fill" id="decisionTimerBar"></div>
+          </div>
+        </div>
+
+        <div class="hud-row" id="hudSecondary" hidden>
+          <div class="prompt">You called FOUL. Next:</div>
+          <div class="actions">
+            <button class="btn" id="btnAdv">ADVANTAGE</button>
+            <button class="btn ghost" id="btnStop">STOP</button>
+          </div>
+        </div>
+
+        <div class="hud-row" id="hudFeedback" hidden>
+          <div class="feedback" id="feedback"></div>
+          <div class="actions">
+            <button class="btn tiny" id="btnContinue" hidden>CONTINUE</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <div class="note">Pixel pitch + 2 players + referee scoring. You decide. 🦞</div>
+    </footer>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
